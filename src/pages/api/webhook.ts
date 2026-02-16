@@ -31,10 +31,8 @@ export const POST: APIRoute = async ({ request }) => {
     const sessionRaw = event.data.object as Stripe.Checkout.Session;
 
     try {
-      // セッション詳細を再取得（shipping_details含む）
-      const session = await stripe.checkout.sessions.retrieve(sessionRaw.id, {
-        expand: ["shipping_details"],
-      });
+      // セッション詳細を再取得
+      const session = await stripe.checkout.sessions.retrieve(sessionRaw.id);
 
       // line_items取得
       const lineItems = await stripe.checkout.sessions.listLineItems(
