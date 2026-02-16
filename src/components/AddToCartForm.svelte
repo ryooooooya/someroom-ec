@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { addCartItem, isCartUpdating, cart } from "../stores/cart";
 
   interface Props {
@@ -16,6 +17,22 @@
   let currentStock = $state(stock);
   let currentIsActive = $state(isActive);
   let errorMessage = $state("");
+
+  // マウント時に最新の在庫を確認
+  onMount(async () => {
+    try {
+      const res = await fetch("/api/check-stock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        currentStock = data.stock;
+        currentIsActive = data.isActive;
+      }
+    } catch {}
+  });
 
   // カート内の同一商品の数量をチェック
   let quantityInCart = $derived(
