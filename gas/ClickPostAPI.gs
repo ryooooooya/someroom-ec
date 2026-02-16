@@ -60,7 +60,7 @@ var ClickPostAPI = (function() {
         addressParts.address,
         '',
         '',
-        order.items || 'デザイン商品',
+        'デザイン商品',
       ].join(',');
     });
 
