@@ -65,8 +65,9 @@ export const POST: APIRoute = async ({ request }) => {
         }
       }
 
-      // 配送先情報
-      const shipping = session.shipping_details;
+      // 配送先情報（API v2026-01-28以降はcollected_informationに格納）
+      const shipping = (session as any).collected_information?.shipping_details
+        || session.shipping_details;
       const address = shipping?.address;
       const shippingAddress = address
         ? `〒${address.postal_code || ""} ${address.state || ""}${address.city || ""}${address.line1 || ""}${address.line2 || ""}`
