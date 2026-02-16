@@ -8,18 +8,17 @@
     removeCartItems,
     isCartUpdating,
   } from "../stores/cart";
-  import ShopifyImage from "./ShopifyImage.svelte";
+  import GenericImage from "./GenericImage.svelte";
   import Money from "./Money.svelte";
   import { clickOutside } from "../utils/click-outside";
+  import { priceToMoney } from "../utils/schemas";
 
   let cartDrawerEl: HTMLDivElement = $state();
 
-  // Add classes to cart line items if cart is updating
   let cartIsUpdatingClass = $derived($isCartUpdating
     ? "opacity-50 pointer-events-none"
     : "");
 
-  // Add focus to cart drawer when it opens
   run(() => {
     if ($isCartDrawerOpen) {
       document.querySelector("body")?.classList.add("overflow-hidden");
@@ -27,8 +26,8 @@
     }
   });
 
-  function removeItem(id: string) {
-    removeCartItems([id]);
+  function removeItem(productId: string) {
+    removeCartItems([productId]);
   }
 
   function closeCartDrawer() {
@@ -107,7 +106,6 @@
                     class="-m-2 p-2 text-gray-400 hover:text-gray-500"
                   >
                     <span class="sr-only">Close panel</span>
-                    <!-- Heroicon name: outline/x-mark -->
                     <svg
                       class="h-6 w-6"
                       xmlns="http://www.w3.org/2000/svg"
@@ -129,19 +127,19 @@
 
               <div class="flex-1 overflow-y-scroll">
                 <div class="px-5">
-                  {#if $cart && $cart.lines?.nodes.length > 0}
+                  {#if $cart && $cart.items?.length > 0}
                     <!-- svelte-ignore a11y_no_redundant_roles -->
                     <ul
                       role="list"
                       class="divide-y divide-zinc-100 {cartIsUpdatingClass}"
                     >
-                      {#each $cart.lines?.nodes as item}
+                      {#each $cart.items as item}
                         <li class="grid py-8 grid-cols-12 gap-3">
                           <div
                             class="overflow-hidden rounded-lg col-span-3 lg:col-span-2"
                           >
-                            <ShopifyImage
-                              image={item.merchandise.image}
+                            <GenericImage
+                              image={item.image}
                               classList="object-cover h-full object-center aspect-1"
                               sizes="(min-width: 100px) 100px"
                               loading="lazy"
@@ -152,12 +150,12 @@
                           >
                             <a
                               class="hover:underline w-fit"
-                              href={`/products/${item.merchandise.product.handle}`}
+                              href={`/products/${item.slug}`}
                             >
-                              {item.merchandise.product.title}
+                              {item.name}
                             </a>
                             <p class="text-xs">
-                              <Money price={item.cost.amountPerQuantity} />
+                              <Money price={priceToMoney(item.price)} />
                             </p>
                           </div>
                           <div
@@ -165,7 +163,7 @@
                           >
                             <button
                               onclick={() => {
-                                removeItem(item.id);
+                                removeItem(item.productId);
                               }}
                               type="button"
                               disabled={$isCartUpdating}
@@ -187,7 +185,7 @@
                             </button>
                             <div>
                               <p class="font-medium">
-                                <Money price={item.cost.totalAmount} />
+                                <Money price={priceToMoney(item.price * item.quantity)} />
                               </p>
                             </div>
                           </div>
@@ -210,7 +208,7 @@
               </div>
 
               <div class="">
-                {#if $cart && $cart.lines?.nodes.length > 0}
+                {#if $cart && $cart.items?.length > 0}
                   <div class="border-t border-zinc-200 py-6 px-4 sm:px-6">
                     <div
                       class="flex justify-between text-base font-medium text-gray-900"
@@ -218,16 +216,16 @@
                       <p>Subtotal</p>
                       <p>
                         <Money
-                          price={$cart.cost.subtotalAmount}
+                          price={priceToMoney($cart.subtotal)}
                           showCurrency={true}
                         />
                       </p>
                     </div>
                     <p class="mt-0.5 text-sm text-gray-500">
-                      Shipping and taxes calculated at checkout.
+                      送料はお会計時に計算されます。
                     </p>
                     <div class="mt-6">
-                      <a href={$cart.checkoutUrl} class="button">Checkout</a>
+                      <a href="/cart" class="button">Checkout</a>
                     </div>
                   </div>
                 {/if}

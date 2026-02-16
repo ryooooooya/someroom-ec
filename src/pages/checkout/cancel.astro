@@ -1,0 +1,22 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="お支払いキャンセル - SomeRoom">
+  <section class="h-full pt-10 pb-12 max-sm:pt-16">
+    <div class="max-w-lg">
+      <h1 class="text-2xl">お支払いがキャンセルされました</h1>
+      <p class="mt-6 text-sm">
+        お支払いがキャンセルされました。カートの商品はそのまま保持されています。
+      </p>
+      <div class="mt-12 flex flex-col gap-y-4">
+        <a href="/cart" class="text-underline text-2xl hover:no-underline">
+          カートに戻る
+        </a>
+        <a href="/" class="text-underline text-2xl hover:no-underline">
+          トップページに戻る
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

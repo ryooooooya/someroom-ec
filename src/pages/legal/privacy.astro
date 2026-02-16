@@ -1,0 +1,64 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="プライバシーポリシー - SomeRoom">
+  <section class="h-full pt-10 pb-12 max-sm:pt-16 max-w-2xl">
+    <h1 class="text-2xl">プライバシーポリシー</h1>
+
+    <div class="mt-8 flex flex-col gap-y-8 text-sm">
+      <div>
+        <h2 class="text-lg font-bold">1. 個人情報の収集について</h2>
+        <p class="mt-2">
+          当サイトでは、商品のご購入・配送に必要な範囲で、以下の個人情報を収集いたします。
+        </p>
+        <ul class="mt-2 list-disc pl-6">
+          <li>お名前</li>
+          <li>メールアドレス</li>
+          <li>お届け先住所</li>
+          <li>電話番号</li>
+        </ul>
+      </div>
+
+      <div>
+        <h2 class="text-lg font-bold">2. 個人情報の利用目的</h2>
+        <p class="mt-2">収集した個人情報は、以下の目的で利用いたします。</p>
+        <ul class="mt-2 list-disc pl-6">
+          <li>商品の発送・配送</li>
+          <li>ご注文内容の確認・連絡</li>
+          <li>お問い合わせへの対応</li>
+        </ul>
+      </div>
+
+      <div>
+        <h2 class="text-lg font-bold">3. 個人情報の第三者提供</h2>
+        <p class="mt-2">
+          お客様の個人情報は、以下の場合を除き、第三者に提供することはありません。
+        </p>
+        <ul class="mt-2 list-disc pl-6">
+          <li>商品配送のため配送業者への提供</li>
+          <li>決済処理のため決済サービス（Stripe）への提供</li>
+          <li>法令に基づく場合</li>
+        </ul>
+      </div>
+
+      <div>
+        <h2 class="text-lg font-bold">4. 決済情報について</h2>
+        <p class="mt-2">
+          クレジットカード情報は、Stripe社のセキュアな決済システムにより処理されます。
+          当サイトではクレジットカード番号を保持・保存いたしません。
+        </p>
+      </div>
+
+      <div>
+        <h2 class="text-lg font-bold">5. お問い合わせ</h2>
+        <p class="mt-2">
+          個人情報の取り扱いに関するお問い合わせは、下記までご連絡ください。
+        </p>
+        <p class="mt-2">
+          メール: info@someroom.net
+        </p>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

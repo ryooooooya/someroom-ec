@@ -1,30 +1,28 @@
 ---
-import type { z } from "zod";
-import type { ProductResult as ShopifyProduct } from "../utils/schemas";
 import type { Products as MicroCMSProduct } from "../utils/microcms";
+import { priceToMoney } from "../utils/schemas";
 
-import ShopifyImage from "./ShopifyImage.svelte";
+import GenericImage from "./GenericImage.svelte";
 import Money from "./Money.svelte";
 
 export interface Props {
   product: MicroCMSProduct;
-  productShopify?: z.infer<typeof ShopifyProduct>;
   className?: string;
   noSeries?: boolean;
 }
-const { product, productShopify, className, noSeries } = Astro.props as Props;
+const { product, className, noSeries } = Astro.props as Props;
 ---
 
 <a
-  href={`/products/${productShopify?.handle || product.id}`}
+  href={`/products/${product.slug || product.id}`}
   class={`${className}`}
 >
   <div class="relative">
-    {productShopify?.featuredImage ? (
-      <ShopifyImage
+    {product.images?.[0] ? (
+      <GenericImage
         classList=""
         loading="lazy"
-        image={productShopify.featuredImage}
+        image={product.images[0]}
         sizes="(min-width: 1280px) 200px, (min-width: 768px) 25vw, 50vw"
       />
     ) : (
@@ -32,24 +30,11 @@ const { product, productShopify, className, noSeries } = Astro.props as Props;
     )}
   </div>
   <div class="">
-    <p class="mt-1 text-xl">{productShopify?.title || product.name}</p>
-    {productShopify?.variants.nodes[0].price && (
+    <p class="mt-1 text-xl">{product.name}</p>
+    {product.price != null && (
       <p class="text-[22px]">
-        <Money price={productShopify.variants.nodes[0].price} />
+        <Money price={priceToMoney(product.price)} />
       </p>
     )}
-    <!-- <div class="flex justify-between mt-[2px] text-sm">
-      <p>
-        {product?.designers[0].nameJa}
-        <span>
-          {product?.designers && product?.designers[1]?.nameJa.length > 0 && ("他")}
-        </span>
-      </p>
-      {noSeries ? null : (
-        <p>
-          {product?.series[0].title}
-        </p>
-      )}
-    </div> -->
   </div>
 </a>

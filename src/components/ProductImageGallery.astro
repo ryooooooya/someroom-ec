@@ -1,26 +1,22 @@
 ---
-import { z } from "zod";
-import { ImageResult } from "../utils/schemas";
-import ShopifyImage from "./ShopifyImage.svelte";
-
-const ImagesResult = z.object({
-  nodes: z.array(ImageResult),
-});
+import GenericImage from "./GenericImage.svelte";
 
 export interface Props {
-  images: z.infer<typeof ImagesResult>;
+  images: { url: string; width: number; height: number; }[];
 }
 const { images } = Astro.props as Props;
 ---
 
 <div class="">
   <div class="md:order-2 md:col-span-6">
-    <ShopifyImage
-      classList="overflow-hidden rounded-lg h-full object-cover"
-      loading="eager"
-      image={images.nodes[0]}
-      sizes="(min-width: 1540px) 475px, (min-width: 1280px) 389px, (min-width: 1040px) 304px, (min-width: 780px) 720px, (min-width: 680px) 592px, calc(94.44vw - 31px)"
-    />
+    {images[0] && (
+      <GenericImage
+        classList="overflow-hidden rounded-lg h-full object-cover"
+        loading="eager"
+        image={images[0]}
+        sizes="(min-width: 1540px) 475px, (min-width: 1280px) 389px, (min-width: 1040px) 304px, (min-width: 780px) 720px, (min-width: 680px) 592px, calc(94.44vw - 31px)"
+      />
+    )}
   </div>
   <div
     class:list={[
@@ -32,15 +28,15 @@ const { images } = Astro.props as Props;
       "md:flex",
       "md:flex-col",
       "md:gap-6",
-      { "md:justify-between": images.nodes.length > 2 },
+      { "md:justify-between": images.length > 2 },
     ]}
   >
     {
-      images.nodes.map((image, index) => {
+      images.map((image, index) => {
         if (index < 3) {
           return (
             <div class="overflow-hidden rounded-lg">
-              <ShopifyImage
+              <GenericImage
                 classList=""
                 loading="lazy"
                 image={image}
