@@ -1,75 +1,72 @@
 <script lang="ts">
-  import { preventDefault } from 'svelte/legacy';
-
   import { addCartItem, isCartUpdating, cart } from "../stores/cart";
 
   interface Props {
-    variantId: string;
-    variantQuantityAvailable: number;
-    variantAvailableForSale: boolean;
+    productId: string;
+    productName: string;
+    productPrice: number;
+    productImage: { url: string; width: number; height: number } | null;
+    productSlug: string;
+    stock: number;
+    isActive: boolean;
   }
 
-  let { variantId, variantQuantityAvailable, variantAvailableForSale }: Props = $props();
+  let { productId, productName, productPrice, productImage, productSlug, stock, isActive }: Props = $props();
 
-  // Check if the variant is already in the cart and if there are any units left
-  let variantInCart =
-    $derived($cart &&
-    $cart.lines?.nodes.filter((item) => item.merchandise.id === variantId)[0]);
-  let noQuantityLeft =
-    $derived(variantInCart && variantQuantityAvailable <= variantInCart?.quantity);
+  // カート内の同一商品の数量をチェック
+  let quantityInCart = $derived(
+    $cart?.items?.find((item) => item.productId === productId)?.quantity || 0
+  );
+  let noQuantityLeft = $derived(stock <= quantityInCart);
 
-  function addToCart(e: Event) {
-    const form = e.target as HTMLFormElement;
-    const formData = new FormData(form);
-    const { id, quantity } = Object.fromEntries(formData);
-    const item = {
-      id: id as string,
-      quantity: parseInt(quantity as string),
-    };
-    addCartItem(item);
+  function addToCart() {
+    addCartItem({
+      productId,
+      name: productName,
+      price: productPrice,
+      image: productImage,
+      slug: productSlug,
+      stock,
+    });
   }
 </script>
 
-<form onsubmit={preventDefault((e) => addToCart(e))}>
-  <input type="hidden" name="id" value={variantId} />
-  <input type="hidden" name="quantity" value="1" />
-
-  <button
-    type="submit"
-    class="button text-sm"
-    disabled={$isCartUpdating || noQuantityLeft || !variantAvailableForSale}
-  >
-    {#if $isCartUpdating}
-      <svg
-        class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-      >
-        <circle
-          class="opacity-25"
-          cx="12"
-          cy="12"
-          r="10"
-          stroke="currentColor"
-          stroke-width="4"
-        />
-        <path
-          class="opacity-75"
-          fill="currentColor"
-          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-        />
-      </svg>
-    {/if}
-    {#if variantAvailableForSale}
-      カートに入れる
-    {:else}
-      売り切れ
-    {/if}
-  </button>
-  {#if noQuantityLeft}
-    <div class="text-center text-red-600">
-      <small>All units left are in your cart</small>
-    </div>
+<button
+  type="button"
+  class="button text-sm"
+  disabled={$isCartUpdating || noQuantityLeft || !isActive || stock <= 0}
+  onclick={addToCart}
+>
+  {#if $isCartUpdating}
+    <svg
+      class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        class="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        stroke-width="4"
+      />
+      <path
+        class="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+      />
+    </svg>
   {/if}
-</form>
+  {#if !isActive || stock <= 0}
+    売り切れ
+  {:else}
+    カートに入れる
+  {/if}
+</button>
+{#if noQuantityLeft && isActive && stock > 0}
+  <div class="text-center text-red-600">
+    <small>在庫上限に達しています</small>
+  </div>
+{/if}

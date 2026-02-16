@@ -1,80 +1,83 @@
 <script>
   import { cart, removeCartItems, updateCartItem, isCartUpdating } from '../stores/cart.ts';
   import { onMount } from 'svelte';
-  
-  let cartData = {};
+
   let cartItems = [];
   let isLoading = true;
   let totalPrice = 0;
-  let checkoutUrl = '';
+  let isCheckingOut = false;
 
-  // nanostoresのカートストアから状態を取得
   onMount(() => {
     const unsubscribeCart = cart.subscribe(value => {
-      console.log('Cart value:', value);
-      
-      cartData = value || {};
-      cartItems = value?.lines?.nodes || [];
-      
-      // 価格を正しく取得（文字列として返されるため）
-      const subtotalAmount = value?.cost?.subtotalAmount?.amount;
-      totalPrice = subtotalAmount ? parseFloat(subtotalAmount) : 0;
-      
-      console.log('Subtotal amount (string):', subtotalAmount);
-      console.log('Parsed total price:', totalPrice);
-      
-      checkoutUrl = value?.checkoutUrl || '';
+      cartItems = value?.items || [];
+      totalPrice = value?.subtotal || 0;
       isLoading = false;
     });
-    
+
     return unsubscribeCart;
   });
 
-  // 商品数量を更新する関数
-  async function updateQuantity(lineId, quantity) {
+  async function updateQuantity(productId, quantity) {
     if (quantity <= 0) {
-      await removeItem(lineId);
+      await removeItem(productId);
       return;
     }
-    
+
     try {
-      const success = await updateCartItem(lineId, quantity);
-      if (!success) {
-        console.error('数量更新に失敗しました');
-        // 必要に応じてユーザーにエラーメッセージを表示
-      }
+      await updateCartItem(productId, quantity);
     } catch (error) {
       console.error('数量更新エラー:', error);
     }
   }
 
-  // 商品を削除する関数
-  async function removeItem(lineId) {
+  async function removeItem(productId) {
     try {
-      await removeCartItems([lineId]);
+      await removeCartItems([productId]);
     } catch (error) {
       console.error('商品削除エラー:', error);
     }
   }
 
-  // チェックアウトに進む関数
-  function proceedToCheckout() {
-    if (cartItems.length === 0) return;
-    
-    if (checkoutUrl) {
-      window.location.href = checkoutUrl;
+  async function proceedToCheckout() {
+    if (cartItems.length === 0 || isCheckingOut) return;
+
+    isCheckingOut = true;
+    try {
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: cartItems.map(item => ({
+            productId: item.productId,
+            quantity: item.quantity,
+          })),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error || 'チェックアウトに失敗しました');
+        return;
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error('チェックアウトエラー:', error);
+      alert('チェックアウトに失敗しました。もう一度お試しください。');
+    } finally {
+      isCheckingOut = false;
     }
   }
 
-  // 価格をフォーマットする関数（文字列の価格に対応）
   function formatPrice(amount) {
-    // 文字列として渡される価格を数値に変換
     const numericAmount = typeof amount === 'string' ? parseFloat(amount) : (amount || 0);
     if (isNaN(numericAmount)) {
-      return '¥0';
+      return '0';
     }
     return new Intl.NumberFormat('ja-JP', {
-      // style: 'currency',
       currency: 'JPY'
     }).format(numericAmount);
   }
@@ -82,7 +85,6 @@
 
 <div class="w-full pt-10 pb-12">
 
-  <!-- 更新中の表示 -->
   {#if $isCartUpdating}
     <div class="fixed top-4 right-4 bg-black text-white px-4 py-2 shadow-lg z-50">
       <div class="flex items-center space-x-2">
@@ -92,13 +94,11 @@
     </div>
   {/if}
 
-  <!-- ローディング -->
   {#if isLoading}
     <div class="flex justify-center items-center py-12">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
     </div>
 
-  <!-- 空のカート -->
   {:else if cartItems.length === 0}
     <div class="">
       <h1 class="text-2xl my-[2px]">カートは空です</h1>
@@ -110,21 +110,18 @@
       </a>
     </div>
 
-  <!-- カートに商品がある場合 -->
   {:else}
     <div class="grid grid-cols-5 gap-10">
-      <!-- 左：商品リスト -->
       <div class="col-span-3 max-lg:col-span-5">
         <h1 class="text-2xl my-[2px]">カート</h1>
         <div class="mt-9 flex flex-col gap-y-4">
-          {#each cartItems as line (line.id)}
+          {#each cartItems as item (item.productId)}
             <div class="flex items-center gap-x-6 max-sm:items-start">
-              <!-- 商品画像 -->
               <div class="flex-shrink-0 w-24 h-24">
-                {#if line.merchandise?.image?.url}
+                {#if item.image?.url}
                   <img
-                    src={line.merchandise.image.url}
-                    alt={line.merchandise.image.altText || line.merchandise.product.title}
+                    src={item.image.url}
+                    alt={item.name}
                     class="w-full h-full object-cover"
                   />
                 {:else}
@@ -136,47 +133,41 @@
                 {/if}
               </div>
               <div class="contents max-sm:flex max-sm:flex-col max-sm:gap-y-3">
-                <!-- 商品情報 -->
                 <div class="flex-1">
                   <h3 class="text-lg">
-                    {line.merchandise?.product?.title || 'Unknown Product'}
+                    {item.name}
                   </h3>
-                  {#if line.merchandise?.title && line.merchandise.title !== 'Default Title'}
-                    <p class="text-sm text-gray-600">{line.merchandise.title}</p>
-                  {/if}
                   <p class="text-lg font-medium text-gray-900 mt-2">
                     <span class="text-sm">¥</span>
-                    {formatPrice(line.cost?.amountPerQuantity?.amount || '0')}
+                    {formatPrice(item.price)}
                   </p>
                 </div>
                 <div class="flex gap-x-4">
-                  <!-- 数量調整 -->
                   <div class="flex items-center space-x-3">
                     <button
-                      on:click={() => updateQuantity(line.id, line.quantity - 1)}
+                      onclick={() => updateQuantity(item.productId, item.quantity - 1)}
                       class="w-8 h-8 rounded-full text-white bg-black flex items-center justify-center hover:text-gray-500 transition-colors disabled:text-gray-700 disabled:cursor-not-allowed hover:cursor-pointer"
                       aria-label="数量を減らす"
-                      disabled={line.quantity <= 1 || $isCartUpdating}
+                      disabled={item.quantity <= 1 || $isCartUpdating}
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
                       </svg>
                     </button>
-                    <span class="w-8 text-center font-medium">{line.quantity}</span>
+                    <span class="w-8 text-center font-medium">{item.quantity}</span>
                     <button
-                      on:click={() => updateQuantity(line.id, line.quantity + 1)}
+                      onclick={() => updateQuantity(item.productId, item.quantity + 1)}
                       class="w-8 h-8 rounded-full text-white bg-black flex items-center justify-center hover:text-gray-500 transition-colors disabled:text-gray-700 disabled:cursor-not-allowed hover:cursor-pointer"
                       aria-label="数量を増やす"
-                      disabled={$isCartUpdating}
+                      disabled={$isCartUpdating || item.quantity >= item.stock}
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                       </svg>
                     </button>
                   </div>
-                  <!-- 削除ボタン -->
                   <button
-                    on:click={() => removeItem(line.id)}
+                    onclick={() => removeItem(item.productId)}
                     class="w-8 h-8 rounded-full flex items-center justify-center ml-4 text-white bg-black hover:text-gray-500 transition-colors hover:cursor-pointer"
                     aria-label="商品を削除"
                   >
@@ -190,7 +181,6 @@
           {/each}
         </div>
       </div>
-      <!-- 右：注文サマリー -->
       <div class="col-span-2 max-lg:col-span-5">
         <div class="px-10 sticky top-6 max-lg:px-0">
           <h2 class="text-2xl">注文内容</h2>
@@ -216,11 +206,15 @@
             </div>
             <div class="pt-4">
               <button
-                on:click={proceedToCheckout}
-                class="w-full bg-black text-white py-3 px-4 hover:text-gray-500 transition-colors font-medium cursor-pointer"
-                disabled={cartItems.length === 0}
+                onclick={proceedToCheckout}
+                class="w-full bg-black text-white py-3 px-4 hover:text-gray-500 transition-colors font-medium cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={cartItems.length === 0 || isCheckingOut}
               >
-                お会計に進む
+                {#if isCheckingOut}
+                  処理中...
+                {:else}
+                  お会計に進む
+                {/if}
               </button>
             </div>
             <a
@@ -229,7 +223,7 @@
             >
               ショッピングを続ける
             </a>
-          </div>  
+          </div>
         </div>
       </div>
     </div>
@@ -238,7 +232,6 @@
 
 <style>
   .cart-page {
-    /* ページ用のスタイル（モーダル用スタイルを上書き） */
     position: static !important;
     background: transparent !important;
     padding: 0 !important;

@@ -1,11 +1,9 @@
 ---
-import { z } from "zod";
-import { ProductResult } from "../utils/schemas";
-import ProductCard from "./ProductCard.astro";
+import type { Products } from "../utils/microcms";
+import ProductCardByMicrocms from "./ProductCardByMicrocms.astro";
 
-const ProductsResult = z.array(ProductResult);
 export interface Props {
-  products: z.infer<typeof ProductsResult>;
+  products: Products[];
 }
 const { products } = Astro.props as Props;
 ---
@@ -13,7 +11,7 @@ const { products } = Astro.props as Props;
 <section>
   <div class="container py-16 sm:py-20">
     <div class="grid gap-12 md:grid-cols-2 lg:grid-cols-3">
-      {products.map((product) => <ProductCard product={product} />)}
+      {products.map((product) => <ProductCardByMicrocms product={product} />)}
     </div>
   </div>
 </section>

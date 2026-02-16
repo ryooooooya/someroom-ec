@@ -1,5 +1,6 @@
 ---
-import { getProductByHandle } from "./../../utils/shopify";
+import { getProductBySlug, getProducts } from "../../utils/microcms";
+import { priceToMoney } from "../../utils/schemas";
 import { setCache } from "../../utils/cache";
 
 import BaseLayout from "../../layouts/BaseLayout.astro";
@@ -12,52 +13,38 @@ import Money from "../../components/Money.svelte";
 import ProductListXScrollWrap from "../../components/ProductListXScrollWrap.astro";
 
 const { handle } = Astro.params;
-const headers = Astro.request.headers;
-const ip = headers.get("x-vercel-forwarded-for") || Astro.clientAddress;
-const product = await getProductByHandle({ handle: handle || "", buyerIP: ip });
+const product = await getProductBySlug(handle || "");
 
 if (!product) {
   Astro.response.status = 404;
 }
 
-const firstVariant = product?.variants.nodes[0];
 setCache.medium(Astro);
 
-import { getProductDetail, getProducts } from "../../utils/microcms";
-import { getProductsByHandles } from "./../../utils/shopify";
-
-// Get product information with depth 1 (only direct relations)
-const productInfomation = await getProductDetail(handle as string, {
-  depth: 1
-});
-
 // Build filters for related products
-const seriesIds = productInfomation.series.map((s) => s.id);
-const designerIds = productInfomation.designers.map((d) => d.id);
-const categoryIds = productInfomation.categories.map((c) => c.id);
+const seriesIds = product?.series?.map((s) => s.id) || [];
+const designerIds = product?.designers?.map((d) => d.id) || [];
+const categoryIds = product?.categories?.map((c) => c.id) || [];
 
-// Fetch related products with optimized queries (only what's needed for each section)
+// Fetch related products
 const [seriesProducts, designerProducts, categoryProducts] = await Promise.all([
-  // Only fetch if there are series
   seriesIds.length > 0
     ? getProducts({
-        filters: `id[not_equals]${productInfomation.id}[and]series[contains]${seriesIds[0]}${seriesIds.slice(1).map(id => `[or]series[contains]${id}`).join('')}`,
+        filters: `id[not_equals]${product!.id}[and]series[contains]${seriesIds[0]}${seriesIds.slice(1).map(id => `[or]series[contains]${id}`).join('')}`,
         limit: 20,
         depth: 1
       })
     : Promise.resolve({ contents: [] }),
-  // Only fetch if there are designers
   designerIds.length > 0
     ? getProducts({
-        filters: `id[not_equals]${productInfomation.id}[and]designers[contains]${designerIds[0]}${designerIds.slice(1).map(id => `[or]designers[contains]${id}`).join('')}`,
+        filters: `id[not_equals]${product!.id}[and]designers[contains]${designerIds[0]}${designerIds.slice(1).map(id => `[or]designers[contains]${id}`).join('')}`,
         limit: 20,
         depth: 1
       })
     : Promise.resolve({ contents: [] }),
-  // Only fetch if there are categories
   categoryIds.length > 0
     ? getProducts({
-        filters: `id[not_equals]${productInfomation.id}[and]categories[contains]${categoryIds[0]}${categoryIds.slice(1).map(id => `[or]categories[contains]${id}`).join('')}`,
+        filters: `id[not_equals]${product!.id}[and]categories[contains]${categoryIds[0]}${categoryIds.slice(1).map(id => `[or]categories[contains]${id}`).join('')}`,
         limit: 20,
         depth: 1
       })
@@ -65,60 +52,51 @@ const [seriesProducts, designerProducts, categoryProducts] = await Promise.all([
 ]);
 
 // Map products to their respective categories
-const productsListSeries = productInfomation.series.map((series) => (
-  seriesProducts.contents.filter((product: any) =>
-    product.series.some((ser: any) => ser.id === series.id)
+const productsListSeries = product?.series?.map((series) => (
+  seriesProducts.contents.filter((p: any) =>
+    p.series.some((ser: any) => ser.id === series.id)
   )
-));
-const productsListDesigner = productInfomation.designers.map((designer) => (
-  designerProducts.contents.filter((product: any) =>
-    product.designers.some((creator: any) => creator.id === designer.id)
+)) || [];
+const productsListDesigner = product?.designers?.map((designer) => (
+  designerProducts.contents.filter((p: any) =>
+    p.designers.some((creator: any) => creator.id === designer.id)
   )
-));
-const productsListCat = productInfomation.categories.map((category) => (
-  categoryProducts.contents.filter((product: any) =>
-    product.categories.some((cat: any) => cat.id === category.id)
+)) || [];
+const productsListCat = product?.categories?.map((category) => (
+  categoryProducts.contents.filter((p: any) =>
+    p.categories.some((cat: any) => cat.id === category.id)
   )
-));
-
-// Collect all unique product IDs and fetch Shopify products in bulk
-const allProductIds = new Set([
-  ...seriesProducts.contents.map((p: any) => p.id),
-  ...designerProducts.contents.map((p: any) => p.id),
-  ...categoryProducts.contents.map((p: any) => p.id)
-]);
-const shopifyProductsMap = await getProductsByHandles({
-  handles: Array.from(allProductIds),
-  buyerIP: ip
-});
+)) || [];
 ---
 
 {
   !product ? (
-    // 取得できなかったとき
     <NotFoundLayout title="Product not found" message="Product not found" />
   ) : (
-    // 取得できたとき
-    <BaseLayout title={product.title}>
+    <BaseLayout title={product.name}>
       <section class="pt-20 pb-8">
         <div class="grid grid-cols-2 gap-12 max-xs:grid-cols-1">
           <div class="">
-            <ProductImageGallery images={product.images} />
+            <ProductImageGallery images={product.images || []} />
           </div>
           <div class="pt-6">
             <h1 class="text-2xl">
-              {productInfomation.name}
+              {product.name}
             </h1>
             <p class="mt-6 text-[28px] leading-6">
-              <Money price={product?.variants.nodes[0].price} size="lg" />
+              <Money price={priceToMoney(product.price)} size="lg" />
               <span class="text-base"> （税込）</span>
             </p>
             <div class="max-w-[200px] mt-5 max-xs:max-w-full">
               <AddToCartForm
                 client:load
-                variantId={firstVariant?.id}
-                variantQuantityAvailable={firstVariant?.quantityAvailable}
-                variantAvailableForSale={firstVariant?.availableForSale}
+                productId={product.id}
+                productName={product.name}
+                productPrice={product.price}
+                productImage={product.images?.[0] || null}
+                productSlug={product.slug || product.id}
+                stock={product.stock}
+                isActive={product.isActive}
               />
             </div>
             <dl class="grid grid-cols-[auto_1fr] gap-x-2 gap-y-5 mt-12">
@@ -126,7 +104,7 @@ const shopifyProductsMap = await getProductsByHandles({
                 Designer:
               </dd>
               <dt class="text-xl text-underline hover:no-underline">
-                {productInfomation.designers.map((designer) => (
+                {product.designers.map((designer) => (
                   <a href={`/designers/${designer.id}`}>{designer.nameJa}</a>
                 ))}
               </dt>
@@ -134,19 +112,19 @@ const shopifyProductsMap = await getProductsByHandles({
                 Size:
               </dd>
               <dt class="text-xl text-underline hover:no-underline">
-                {productInfomation.size}
+                {product.size}
               </dt>
               <dd class="text-xs -mt-1 text-right">
                 Series:
               </dd>
               <dt class="text-xl text-underline hover:no-underline">
-                {productInfomation.series.map((series) => (
+                {product.series.map((series) => (
                   <a href={`/series/${series.id}`}>{series.title}</a>
                 ))}
               </dt>
-              {productInfomation.text && (
+              {product.text && (
                 <>
-                  {productInfomation.text.map((contents) => (
+                  {product.text.map((contents) => (
                     <>
                       <dd class="text-xs -mt-1 text-right">
                         {contents.title}:
@@ -162,7 +140,7 @@ const shopifyProductsMap = await getProductsByHandles({
                 Notes:
               </dd>
               <dt class="text-xl text-underline hover:no-underline">
-                {productInfomation.link.map((note) =>(
+                {product.link.map((note) =>(
                   <a href={note.url} target="_blank" rel="noopener noreferrer">{note.text}</a>
                 ))}
               </dt>
@@ -170,7 +148,7 @@ const shopifyProductsMap = await getProductsByHandles({
           </div>
         </div>
       </section>
-      {productInfomation.series && productInfomation.series.length > 0 && productInfomation.series.map((series: any, index: number) =>(
+      {product.series && product.series.length > 0 && product.series.map((series: any, index: number) =>(
         productsListSeries[index] && productsListSeries[index].length > 0 && (
           <section class="mt-24">
             <p class="flex items-start gap-1">
@@ -178,10 +156,9 @@ const shopifyProductsMap = await getProductsByHandles({
               <span class="text-2xl">{series.title}</span>
             </p>
             <ProductListXScrollWrap>
-              {productsListSeries[index].map((product: any) => (
+              {productsListSeries[index].map((p: any) => (
                 <ProductCardByMicrocms
-                  product={product}
-                  productShopify={shopifyProductsMap.get(product.id)}
+                  product={p}
                   className="max-w-[200px] min-w-[163px] max-xs:min-w-[calc(50%-16px)]"
                 />
               ))}
@@ -189,7 +166,7 @@ const shopifyProductsMap = await getProductsByHandles({
           </section>
         )
       ))}
-      {productInfomation.designers && productInfomation.designers.length > 0 && productInfomation.designers.map((designer: any, index: number) =>(
+      {product.designers && product.designers.length > 0 && product.designers.map((designer: any, index: number) =>(
         productsListDesigner[index] && productsListDesigner[index].length > 0 && (
           <section class="mt-24">
             <p class="flex items-start gap-1">
@@ -197,10 +174,9 @@ const shopifyProductsMap = await getProductsByHandles({
               <span class="text-2xl">{designer.nameJa}</span>
             </p>
             <ProductListXScrollWrap>
-              {productsListDesigner[index].map((product: any) => (
+              {productsListDesigner[index].map((p: any) => (
                 <ProductCardByMicrocms
-                  product={product}
-                  productShopify={shopifyProductsMap.get(product.id)}
+                  product={p}
                   className="max-w-[200px] min-w-[163px] max-xs:min-w-[calc(50%-16px)]"
                 />
               ))}
@@ -208,7 +184,7 @@ const shopifyProductsMap = await getProductsByHandles({
           </section>
         )
       ))}
-      {productInfomation.categories && productInfomation.categories.length > 0 && productInfomation.categories.map((category: any, index: number) => (
+      {product.categories && product.categories.length > 0 && product.categories.map((category: any, index: number) => (
         productsListCat[index] && productsListCat[index].length > 0 && (
           <section class="mt-24">
             <p class="flex items-start gap-1">
@@ -216,10 +192,9 @@ const shopifyProductsMap = await getProductsByHandles({
               <span class="text-2xl">{category.name}</span>
             </p>
             <ProductListXScrollWrap>
-              {productsListCat[index].map((product: any) => (
+              {productsListCat[index].map((p: any) => (
                 <ProductCardByMicrocms
-                  product={product}
-                  productShopify={shopifyProductsMap.get(product.id)}
+                  product={p}
                   className="max-w-[200px] min-w-[163px] max-xs:min-w-[calc(50%-16px)]"
                 />
               ))}

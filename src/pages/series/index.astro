@@ -1,15 +1,11 @@
 ---
 import { getSeries, getProducts } from "../../utils/microcms";
-import { getProductsByHandles } from "../../utils/shopify";
 import { setCache } from "../../utils/cache";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import ProductCardByMicrocms from "../../components/ProductCardByMicrocms.astro";
 import ProductListXScrollWrap from "../../components/ProductListXScrollWrap.astro";
 
 const title = "SomeRoom";
-
-const headers = Astro.request.headers;
-const ip = headers.get("x-vercel-forwarded-for") || Astro.clientAddress;
 
 // Fetch series and all products in parallel for better performance
 const [series, allProducts] = await Promise.all([
@@ -27,10 +23,6 @@ allProducts.contents.forEach((product: any) => {
     productsBySeries.get(ser.id).push(product);
   });
 });
-
-// Fetch Shopify products in bulk for all products
-const allHandles = allProducts.contents.map((p: any) => p.id);
-const shopifyProductsMap = await getProductsByHandles({ handles: allHandles, buyerIP: ip });
 
 // Apply static cache for series list page
 setCache.static(Astro);
@@ -58,7 +50,6 @@ setCache.static(Astro);
               {seriesProducts.slice(0, 10).map((product: any) => (
                 <ProductCardByMicrocms
                   product={product}
-                  productShopify={shopifyProductsMap.get(product.id)}
                   className="max-w-[200px] min-w-[163px] max-xs:min-w-[calc(50%-16px)]"
                   noSeries
                 />

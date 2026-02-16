@@ -1,48 +1,33 @@
 ---
-import type { z } from "zod";
-import type { ProductResult } from "../utils/schemas";
+import type { Products } from "../utils/microcms";
+import { priceToMoney } from "../utils/schemas";
 
-import ShopifyImage from "./ShopifyImage.svelte";
+import GenericImage from "./GenericImage.svelte";
 import Money from "./Money.svelte";
 
 export interface Props {
-  product: z.infer<typeof ProductResult>;
+  product: Products;
   className?: string;
 }
-const { product,className } = Astro.props as Props;
-
-
-import { getProductDetail } from "../utils/microcms";
-const productInfomation = await getProductDetail(product?.handle as string);
+const { product, className } = Astro.props as Props;
 ---
 
 <a
-  href={`/products/${product?.handle}`}
+  href={`/products/${product.slug || product.id}`}
   class={`${className}`}
 >
   <div class="relative">
-    <ShopifyImage
+    <GenericImage
       classList=""
       loading="lazy"
-      image={product?.featuredImage}
+      image={product.images?.[0] || null}
       sizes="(min-width: 1280px) 200px, (min-width: 768px) 25vw, 50vw"
     />
   </div>
   <div class="">
-    <p class="mt-1 text-xl">{product?.title}</p>
+    <p class="mt-1 text-xl">{product.name}</p>
     <p class="text-[22px]">
-      <Money price={product?.variants.nodes[0].price} />
+      <Money price={priceToMoney(product.price)} />
     </p>
-    <!-- <div class="flex justify-between mt-[2px] text-sm">
-      <p>
-        {productInfomation.designers[0].nameJa}
-        <span>
-          {productInfomation?.designers && productInfomation?.designers[1]?.nameJa.length > 0 && ("他")}
-        </span>
-      </p>
-      <p>
-        {productInfomation.series[0].title}
-      </p>
-    </div> -->
   </div>
 </a>

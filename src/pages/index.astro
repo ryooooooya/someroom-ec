@@ -1,18 +1,12 @@
 ---
-import { z } from "zod";
-import { ProductResult } from "../utils/schemas";
-import { getProducts } from "./../utils/shopify";
+import { getActiveProducts } from "../utils/microcms";
 import { setCache } from "../utils/cache";
 
 import BaseLayout from "../layouts/BaseLayout.astro";
-import ProductCard from "../components/ProductCard.astro";
-
-const ProductsResult = z.array(ProductResult);
+import ProductCardByMicrocms from "../components/ProductCardByMicrocms.astro";
 
 const title = "SomeRoom";
-const headers = Astro.request.headers;
-const ip = headers.get("x-vercel-forwarded-for") || Astro.clientAddress;
-const products: z.infer<typeof ProductsResult> = await getProducts({ buyerIP: ip });
+const products = await getActiveProducts({ limit: 100 });
 
 setCache.long(Astro);
 ---
@@ -23,7 +17,7 @@ setCache.long(Astro);
       All products:
     </h2>
     <div class="grid grid-cols-5 gap-12 mt-3 max-lg:grid-cols-4 max-md:grid-cols-3 max-md:gap-8 max-sm:grid-cols-2 max-sm:gap-4">
-      {products.map((product) => <ProductCard product={product} />)}
+      {products.contents.map((product) => <ProductCardByMicrocms product={product} />)}
     </div>
   </section>
 </BaseLayout>

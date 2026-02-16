@@ -57,5 +57,11 @@ const { title, description = defaultDesc, currentPage } = Astro.props as Props;
         <slot />
       </main>
     </div>
+    <footer class="px-12 py-8 border-t border-gray-200 max-lg:px-8 max-sm:px-6 max-xs:px-4">
+      <div class="flex gap-x-6 text-xs text-gray-500">
+        <a href="/legal/tokusho" class="hover:text-black transition-colors">特定商取引法に基づく表記</a>
+        <a href="/legal/privacy" class="hover:text-black transition-colors">プライバシーポリシー</a>
+      </div>
+    </footer>
   </body>
 </html>

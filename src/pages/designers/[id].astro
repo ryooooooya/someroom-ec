@@ -1,6 +1,5 @@
 ---
 import { getSeries, getDesignerDetail, getDesigners, getProducts } from "../../utils/microcms";
-import { getProductsByHandles } from "../../utils/shopify";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import ProductCardByMicrocms from "../../components/ProductCardByMicrocms.astro";
 import ProductListXScrollWrap from "../../components/ProductListXScrollWrap.astro";
@@ -26,12 +25,6 @@ const products = await getProducts({
   filters: `designers[contains]${id}`,
   limit: 100
 });
-
-// Fetch Shopify products in bulk
-const headers = Astro.request.headers;
-const ip = headers.get("x-vercel-forwarded-for") || Astro.clientAddress;
-const handles = products.contents.map((p: any) => p.id);
-const shopifyProductsMap = await getProductsByHandles({ handles, buyerIP: ip });
 ---
 
 <BaseLayout title={title} currentPage="designers">
@@ -79,7 +72,6 @@ const shopifyProductsMap = await getProductsByHandles({ handles, buyerIP: ip });
               ser.id === content.id && (
                 <ProductCardByMicrocms
                   product={product}
-                  productShopify={shopifyProductsMap.get(product.id)}
                   className="max-w-[200px] min-w-[163px] max-xs:min-w-[calc(50%-16px)]"
                 />
               )
@@ -100,7 +92,6 @@ const shopifyProductsMap = await getProductsByHandles({ handles, buyerIP: ip });
         {products.contents.map((product: any) => (
           <ProductCardByMicrocms
             product={product}
-            productShopify={shopifyProductsMap.get(product.id)}
             className=""
           />
         ))}

@@ -1,21 +1,25 @@
 ---
-import { getProductRecommendations } from "../utils/shopify";
-import ProductCard from "./ProductCard.astro";
+import { getProducts } from "../utils/microcms";
+import ProductCardByMicrocms from "./ProductCardByMicrocms.astro";
+
 export interface Props {
   productId: string;
-  buyerIP: string;
+  categoryIds?: string[];
 }
 
-const { productId, buyerIP } = Astro.props as Props;
+const { productId, categoryIds = [] } = Astro.props as Props;
 
-const productRecommendations = await getProductRecommendations({
-  productId,
-  buyerIP,
-});
+// Fetch related products by category
+const products = categoryIds.length > 0
+  ? await getProducts({
+      filters: `id[not_equals]${productId}[and]categories[contains]${categoryIds[0]}`,
+      limit: 4,
+    })
+  : { contents: [] };
 ---
 
 {
-  productRecommendations.length > 0 && (
+  products.contents.length > 0 && (
     <section class="bg-white">
       <div class="py-16 sm:py-24">
         <h2 class="text-2xl font-bold tracking-tight text-gray-900">
@@ -23,8 +27,8 @@ const productRecommendations = await getProductRecommendations({
         </h2>
 
         <div class="mt-6 grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-4 xl:gap-x-8">
-          {productRecommendations.map((product) => (
-            <ProductCard product={product} />
+          {products.contents.map((product) => (
+            <ProductCardByMicrocms product={product} />
           ))}
         </div>
       </div>

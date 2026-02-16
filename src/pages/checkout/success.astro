@@ -1,0 +1,27 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="注文完了 - SomeRoom">
+  <section class="h-full pt-10 pb-12 max-sm:pt-16">
+    <div class="max-w-lg">
+      <h1 class="text-2xl">ご注文ありがとうございます</h1>
+      <p class="mt-6 text-sm">
+        ご注文を承りました。確認メールをお送りいたしましたので、ご確認ください。
+      </p>
+      <p class="mt-4 text-sm">
+        発送準備が整い次第、発送のご連絡をいたします。
+      </p>
+      <div class="mt-12">
+        <a href="/" class="text-underline text-2xl hover:no-underline">
+          トップページに戻る
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    import { clearCart } from "../../stores/cart";
+    clearCart();
+  </script>
+</BaseLayout>
