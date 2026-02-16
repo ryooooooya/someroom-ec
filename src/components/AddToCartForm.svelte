@@ -13,20 +13,56 @@
 
   let { productId, productName, productPrice, productImage, productSlug, stock, isActive }: Props = $props();
 
+  let currentStock = $state(stock);
+  let currentIsActive = $state(isActive);
+  let errorMessage = $state("");
+
   // カート内の同一商品の数量をチェック
   let quantityInCart = $derived(
     $cart?.items?.find((item) => item.productId === productId)?.quantity || 0
   );
-  let noQuantityLeft = $derived(stock <= quantityInCart);
+  let noQuantityLeft = $derived(currentStock <= quantityInCart);
 
-  function addToCart() {
+  async function addToCart() {
+    errorMessage = "";
+
+    // APIで最新の在庫を確認
+    try {
+      const res = await fetch("/api/check-stock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        errorMessage = data.error || "在庫確認に失敗しました";
+        return;
+      }
+
+      currentStock = data.stock;
+      currentIsActive = data.isActive;
+
+      if (!data.isActive) {
+        errorMessage = "この商品は現在販売停止中です";
+        return;
+      }
+      if (data.stock <= quantityInCart) {
+        errorMessage = "在庫がありません";
+        return;
+      }
+    } catch {
+      errorMessage = "在庫確認に失敗しました";
+      return;
+    }
+
     addCartItem({
       productId,
       name: productName,
       price: productPrice,
       image: productImage,
       slug: productSlug,
-      stock,
+      stock: currentStock,
     });
   }
 </script>
@@ -34,7 +70,7 @@
 <button
   type="button"
   class="button text-sm"
-  disabled={$isCartUpdating || noQuantityLeft || !isActive || stock <= 0}
+  disabled={$isCartUpdating || noQuantityLeft || !currentIsActive || currentStock <= 0}
   onclick={addToCart}
 >
   {#if $isCartUpdating}
@@ -59,13 +95,17 @@
       />
     </svg>
   {/if}
-  {#if !isActive || stock <= 0}
+  {#if !currentIsActive || currentStock <= 0}
     売り切れ
   {:else}
     カートに入れる
   {/if}
 </button>
-{#if noQuantityLeft && isActive && stock > 0}
+{#if errorMessage}
+  <div class="text-center text-red-600">
+    <small>{errorMessage}</small>
+  </div>
+{:else if noQuantityLeft && currentIsActive && currentStock > 0}
   <div class="text-center text-red-600">
     <small>在庫上限に達しています</small>
   </div>
