@@ -84,7 +84,7 @@ export const POST: APIRoute = async ({ request }) => {
         totalAmount: session.amount_total ? session.amount_total : 0,
         currency: session.currency || "jpy",
         status: "paid",
-        createdAt: new Date(session.created * 1000).toISOString(),
+        createdAt: new Date(session.created * 1000).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
       };
 
       try {
