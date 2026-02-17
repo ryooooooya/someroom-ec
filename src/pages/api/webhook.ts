@@ -31,24 +31,41 @@ export const POST: APIRoute = async ({ request }) => {
     const sessionRaw = event.data.object as Stripe.Checkout.Session;
 
     try {
-      // セッション詳細を再取得
-      const session = await stripe.checkout.sessions.retrieve(sessionRaw.id);
+      // line_itemsをexpandで取得（ドキュメント推奨方式）
+      const session = await stripe.checkout.sessions.retrieve(sessionRaw.id, {
+        expand: ["line_items", "line_items.data.price.product"],
+      });
 
-      // line_items取得
-      const lineItems = await stripe.checkout.sessions.listLineItems(
-        session.id
-      );
+      const lineItems = session.line_items?.data || [];
 
-      // metadataからカートデータ取得
-      const cartData = JSON.parse(session.metadata?.cartData || "[]") as {
+      // line_itemsから商品情報を抽出
+      const cartItems: {
         productId: string;
         name: string;
         price: number;
         quantity: number;
-      }[];
+      }[] = [];
+
+      for (const item of lineItems) {
+        // product_dataのmetadataからmicroCmsIdを取得
+        let microCmsId = "";
+        if (item.price?.product && typeof item.price.product === "object") {
+          const product = item.price.product as Stripe.Product;
+          microCmsId = product.metadata?.microCmsId || "";
+        }
+
+        cartItems.push({
+          productId: microCmsId,
+          name: item.description || "",
+          price: item.price?.unit_amount || 0,
+          quantity: item.quantity || 0,
+        });
+      }
 
       // microCMS在庫減算
-      for (const item of cartData) {
+      let inventoryUpdated = true;
+      for (const item of cartItems) {
+        if (!item.productId) continue;
         try {
           const product = await getProductDetail(item.productId);
           const newStock = Math.max(0, product.stock - item.quantity);
@@ -58,6 +75,7 @@ export const POST: APIRoute = async ({ request }) => {
             `Stock update failed for ${item.productId}:`,
             stockError
           );
+          inventoryUpdated = false;
           await sendErrorNotification(
             String(stockError),
             `在庫更新失敗: ${item.name} (${item.productId})`
@@ -66,25 +84,33 @@ export const POST: APIRoute = async ({ request }) => {
       }
 
       // 配送先情報（API v2026-01-28以降はcollected_informationに格納）
-      const shipping = (session as any).collected_information?.shipping_details
-        || session.shipping_details;
+      const sessionAny = session as any;
+      const shipping =
+        sessionAny.collected_information?.shipping_details ||
+        sessionAny.shipping_details;
       const address = shipping?.address;
+      const postalCode = address?.postal_code || "";
       const shippingAddress = address
-        ? `〒${address.postal_code || ""} ${address.state || ""}${address.city || ""}${address.line1 || ""}${address.line2 || ""}`
+        ? `${address.state || ""}${address.city || ""}${address.line1 || ""}${address.line2 || ""}`
         : "";
 
-      // Google Spreadsheet注文記録
+      // Google Spreadsheet注文記録（ドキュメント15列フォーマット）
       const orderData: OrderData = {
         orderId: session.payment_intent as string,
-        sessionId: session.id,
+        createdAt: new Date(session.created * 1000).toLocaleString("ja-JP", {
+          timeZone: "Asia/Tokyo",
+        }),
+        items: cartItems,
+        totalAmount: session.amount_total || 0,
         customerEmail: session.customer_details?.email || "",
-        customerName: shipping?.name || session.customer_details?.name || "",
+        postalCode,
         shippingAddress,
-        items: cartData,
-        totalAmount: session.amount_total ? session.amount_total : 0,
-        currency: session.currency || "jpy",
-        status: "paid",
-        createdAt: new Date(session.created * 1000).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }),
+        customerName: shipping?.name || session.customer_details?.name || "",
+        phone: session.customer_details?.phone || "",
+        status: "未発送",
+        inventoryUpdated,
+        notes: "",
+        stripeUrl: `https://dashboard.stripe.com/payments/${session.payment_intent}`,
       };
 
       try {
@@ -108,7 +134,7 @@ export const POST: APIRoute = async ({ request }) => {
       console.error("Webhook processing error:", error);
       await sendErrorNotification(
         String(error),
-        `Webhook処理エラー: session ${session.id}`
+        `Webhook処理エラー: session ${sessionRaw.id}`
       );
       return new Response("Processing error", { status: 500 });
     }

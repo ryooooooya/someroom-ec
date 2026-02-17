@@ -35,13 +35,15 @@ export function formatOrderNotification(order: OrderData) {
     `🛒 新しい注文が入りました！`,
     `注文ID: ${order.orderId}`,
     `お客様: ${order.customerName} (${order.customerEmail})`,
-    `配送先: ${order.shippingAddress}`,
+    `配送先: 〒${order.postalCode} ${order.shippingAddress}`,
     ``,
     `【注文内容】`,
     itemsList,
     ``,
     `合計: ¥${order.totalAmount.toLocaleString()}`,
+    `在庫減算: ${order.inventoryUpdated ? "完了" : "失敗あり"}`,
     `注文日時: ${order.createdAt}`,
+    `Stripe: ${order.stripeUrl}`,
   ].join("\n");
 
   return message;
