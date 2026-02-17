@@ -44,10 +44,11 @@ function createClickPostCSVForSelected() {
 
   for (let i = 0; i < numRows; i++) {
     const row = startRow + i;
-    const orderId = sheet.getRange(row, 1).getValue();
-    const customerName = sheet.getRange(row, 4).getValue();
-    const shippingAddress = sheet.getRange(row, 5).getValue();
-    const items = sheet.getRange(row, 6).getValue();
+    const orderId = sheet.getRange(row, 1).getValue();       // A列: 注文ID
+    const customerName = sheet.getRange(row, 10).getValue();  // J列: 氏名
+    const postalCode = sheet.getRange(row, 8).getValue();     // H列: 郵便番号
+    const shippingAddress = sheet.getRange(row, 9).getValue(); // I列: 住所
+    const items = sheet.getRange(row, 3).getValue();          // C列: 商品名
 
     if (!orderId || !customerName || !shippingAddress) {
       continue;
@@ -56,13 +57,14 @@ function createClickPostCSVForSelected() {
     orders.push({
       orderId: orderId,
       customerName: customerName,
+      postalCode: postalCode,
       shippingAddress: shippingAddress,
       items: items || 'デザイン商品',
     });
   }
 
   if (orders.length === 0) {
-    SpreadsheetApp.getUi().alert('有効な注文データがありません。\n注文ID（A列）、お客様名（D列）、配送先住所（E列）が必要です。');
+    SpreadsheetApp.getUi().alert('有効な注文データがありません。\n注文ID（A列）、氏名（J列）、住所（I列）が必要です。');
     return;
   }
 
