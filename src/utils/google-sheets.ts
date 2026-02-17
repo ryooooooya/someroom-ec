@@ -19,10 +19,7 @@ function getSheets() {
 
 export type OrderData = {
   orderId: string;
-  sessionId: string;
-  customerEmail: string;
-  customerName: string;
-  shippingAddress: string;
+  createdAt: string;
   items: {
     productId: string;
     name: string;
@@ -30,37 +27,55 @@ export type OrderData = {
     quantity: number;
   }[];
   totalAmount: number;
-  currency: string;
+  customerEmail: string;
+  postalCode: string;
+  shippingAddress: string;
+  customerName: string;
+  phone: string;
   status: string;
-  createdAt: string;
+  inventoryUpdated: boolean;
+  notes: string;
+  stripeUrl: string;
 };
 
 export async function addOrderToSheet(orderData: OrderData) {
   const sheets = getSheets();
   const spreadsheetId = import.meta.env.GOOGLE_SPREADSHEET_ID;
 
-  const itemsSummary = orderData.items
-    .map((item) => `${item.name} x${item.quantity} (¥${item.price})`)
-    .join(", ");
+  // 商品情報を改行区切りで整形（複数商品対応）
+  const productNames = orderData.items
+    .map((item) => item.name)
+    .join("\n");
+  const quantities = orderData.items
+    .map((item) => String(item.quantity))
+    .join("\n");
+  const prices = orderData.items
+    .map((item) => String(item.price))
+    .join("\n");
 
   const values = [
     [
-      orderData.orderId,
-      orderData.sessionId,
-      orderData.customerEmail,
-      orderData.customerName,
-      orderData.shippingAddress,
-      itemsSummary,
-      orderData.totalAmount,
-      orderData.currency,
-      orderData.status,
-      orderData.createdAt,
+      orderData.orderId,          // A: 注文ID
+      orderData.createdAt,        // B: 注文日時
+      productNames,               // C: 商品名
+      quantities,                 // D: 数量
+      prices,                     // E: 単価
+      orderData.totalAmount,      // F: 合計金額
+      orderData.customerEmail,    // G: メールアドレス
+      orderData.postalCode,       // H: 郵便番号
+      orderData.shippingAddress,  // I: 住所
+      orderData.customerName,     // J: 氏名
+      orderData.phone,            // K: 電話番号
+      orderData.status,           // L: ステータス
+      orderData.inventoryUpdated ? "TRUE" : "FALSE", // M: 在庫減算済みフラグ
+      orderData.notes,            // N: 備考
+      orderData.stripeUrl,        // O: Stripe URL
     ],
   ];
 
   await sheets.spreadsheets.values.append({
     spreadsheetId,
-    range: "注文一覧!A:J",
+    range: "注文一覧!A:O",
     valueInputOption: "USER_ENTERED",
     requestBody: { values },
   });
@@ -72,7 +87,7 @@ export async function getOrderFromSheet(orderId: string) {
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: "注文一覧!A:J",
+    range: "注文一覧!A:O",
   });
 
   const rows = response.data.values || [];
