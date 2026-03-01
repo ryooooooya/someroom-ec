@@ -9,7 +9,7 @@
     productImage: { url: string; width: number; height: number } | null;
     productSlug: string;
     stock: number;
-    isActive: boolean;
+    isActive: string;
   }
 
   let { productId, productName, productPrice, productImage, productSlug, stock, isActive }: Props = $props();
@@ -17,6 +17,9 @@
   let currentStock = $state(stock);
   let currentIsActive = $state(isActive);
   let errorMessage = $state("");
+
+  let isPreOrder = $derived(currentIsActive === "予約受付中");
+  let isStopped = $derived(currentIsActive === "販売停止中");
 
   // マウント時に最新の在庫を確認
   onMount(async () => {
@@ -38,7 +41,8 @@
   let quantityInCart = $derived(
     $cart?.items?.find((item) => item.productId === productId)?.quantity || 0
   );
-  let noQuantityLeft = $derived(currentStock <= quantityInCart);
+  // 予約受付中の場合は在庫上限チェックをスキップ
+  let noQuantityLeft = $derived(isPreOrder ? false : currentStock <= quantityInCart);
 
   async function addToCart() {
     errorMessage = "";
@@ -60,11 +64,12 @@
       currentStock = data.stock;
       currentIsActive = data.isActive;
 
-      if (!data.isActive) {
+      if (data.isActive === "販売停止中") {
         errorMessage = "この商品は現在販売停止中です";
         return;
       }
-      if (data.stock <= quantityInCart) {
+      // 在庫販売中の場合のみ在庫チェック
+      if (data.isActive === "在庫販売中" && data.stock <= quantityInCart) {
         errorMessage = "在庫がありません";
         return;
       }
@@ -80,6 +85,7 @@
       image: productImage,
       slug: productSlug,
       stock: currentStock,
+      salesStatus: currentIsActive,
     });
   }
 </script>
@@ -87,7 +93,7 @@
 <button
   type="button"
   class="button text-sm"
-  disabled={$isCartUpdating || noQuantityLeft || !currentIsActive || currentStock <= 0}
+  disabled={$isCartUpdating || noQuantityLeft || isStopped || (!isPreOrder && currentStock <= 0)}
   onclick={addToCart}
 >
   {#if $isCartUpdating}
@@ -112,17 +118,26 @@
       />
     </svg>
   {/if}
-  {#if !currentIsActive || currentStock <= 0}
+  {#if isStopped}
+    販売停止中
+  {:else if !isPreOrder && currentStock <= 0}
     売り切れ
+  {:else if isPreOrder}
+    予約注文する
   {:else}
     カートに入れる
   {/if}
 </button>
+{#if isPreOrder}
+  <div class="text-center text-gray-600 mt-2">
+    <small>受注生産品のため、お届けまでお時間をいただきます</small>
+  </div>
+{/if}
 {#if errorMessage}
   <div class="text-center text-red-600">
     <small>{errorMessage}</small>
   </div>
-{:else if noQuantityLeft && currentIsActive && currentStock > 0}
+{:else if noQuantityLeft && !isStopped && !isPreOrder && currentStock > 0}
   <div class="text-center text-red-600">
     <small>在庫上限に達しています</small>
   </div>

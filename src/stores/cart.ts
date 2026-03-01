@@ -10,6 +10,7 @@ export type LocalCartItem = {
   image: { url: string; width: number; height: number } | null;
   slug: string;
   stock: number;
+  salesStatus?: string;
 };
 
 // カート型
@@ -70,6 +71,7 @@ export async function addCartItem(item: {
   slug: string;
   stock: number;
   quantity?: number;
+  salesStatus?: string;
 }) {
   isCartUpdating.set(true);
 
@@ -99,6 +101,7 @@ export async function addCartItem(item: {
         image: item.image,
         slug: item.slug,
         stock: item.stock,
+        salesStatus: item.salesStatus,
       },
     ];
   }

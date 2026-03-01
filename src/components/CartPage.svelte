@@ -159,7 +159,7 @@
                       onclick={() => updateQuantity(item.productId, item.quantity + 1)}
                       class="w-8 h-8 rounded-full text-white bg-black flex items-center justify-center hover:text-gray-500 transition-colors disabled:text-gray-700 disabled:cursor-not-allowed hover:cursor-pointer"
                       aria-label="数量を増やす"
-                      disabled={$isCartUpdating || item.quantity >= item.stock}
+                      disabled={$isCartUpdating || (item.salesStatus !== '予約受付中' && item.quantity >= item.stock)}
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>

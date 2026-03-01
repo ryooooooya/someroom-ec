@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import Stripe from "stripe";
-import { getProductDetail } from "../../utils/microcms";
+import { getProductDetail, SALES_STATUS } from "../../utils/microcms";
 
 const stripe = new Stripe(import.meta.env.STRIPE_SECRET_KEY);
 
@@ -26,9 +26,9 @@ export const POST: APIRoute = async ({ request }) => {
       })
     );
 
-    // 在庫チェック
+    // 販売ステータス・在庫チェック
     for (const { product, quantity } of products) {
-      if (!product.isActive) {
+      if (product.isActive === SALES_STATUS.STOPPED) {
         return new Response(
           JSON.stringify({
             error: `「${product.name}」は現在販売停止中です`,
@@ -36,7 +36,8 @@ export const POST: APIRoute = async ({ request }) => {
           { status: 400, headers: { "Content-Type": "application/json" } }
         );
       }
-      if (product.stock < quantity) {
+      // 在庫販売中の場合のみ在庫チェック（予約受付中はスキップ）
+      if (product.isActive === SALES_STATUS.ON_SALE && product.stock < quantity) {
         return new Response(
           JSON.stringify({
             error: `「${product.name}」の在庫が不足しています（残り${product.stock}個）`,

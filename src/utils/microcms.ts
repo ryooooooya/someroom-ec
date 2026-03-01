@@ -7,6 +7,14 @@ const client = createClient({
 });
 
 
+// 販売ステータス
+export const SALES_STATUS = {
+  ON_SALE: "在庫販売中",
+  PRE_ORDER: "予約受付中",
+  STOPPED: "販売停止中",
+} as const;
+export type SalesStatus = (typeof SALES_STATUS)[keyof typeof SALES_STATUS];
+
 // 型定義
 export type Designers = {
   image: {
@@ -61,7 +69,7 @@ export type Products = {
     height: number;
     width: number;
   }[];
-  isActive: boolean;
+  isActive: SalesStatus;
   slug?: string;
 } & MicroCMSListContent;
 
@@ -110,15 +118,15 @@ export const getProductBySlug = async (slug: string, queries?: MicroCMSQueries) 
   }
 };
 
-// isActive=trueの商品一覧
+// 販売停止中以外の商品一覧
 export const getActiveProducts = async (queries?: MicroCMSQueries) => {
   return await client.getList<Products>({
     endpoint: "products",
     queries: {
       ...queries,
       filters: queries?.filters
-        ? `${queries.filters}[and]isActive[equals]true`
-        : "isActive[equals]true",
+        ? `${queries.filters}[and]isActive[not_equals]${SALES_STATUS.STOPPED}`
+        : `isActive[not_equals]${SALES_STATUS.STOPPED}`,
     },
   });
 };
