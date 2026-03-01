@@ -17,6 +17,7 @@
   let currentStock = $state(stock);
   let currentIsActive = $state(isActive);
   let errorMessage = $state("");
+  let isStatusLoading = $state(true);
 
   let isPreOrder = $derived(currentIsActive === "予約受付中");
   let isStopped = $derived(currentIsActive === "販売停止中");
@@ -35,6 +36,7 @@
         currentIsActive = data.isActive;
       }
     } catch {}
+    isStatusLoading = false;
   });
 
   // カート内の同一商品の数量をチェック
@@ -91,10 +93,12 @@
 <button
   type="button"
   class="button text-sm"
-  disabled={$isCartUpdating || noQuantityLeft || isStopped || currentStock <= 0}
+  disabled={isStatusLoading || $isCartUpdating || noQuantityLeft || isStopped || currentStock <= 0}
   onclick={addToCart}
 >
-  {#if $isCartUpdating}
+  {#if isStatusLoading}
+    …
+  {:else if $isCartUpdating}
     <svg
       class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
       xmlns="http://www.w3.org/2000/svg"
@@ -115,8 +119,7 @@
         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
       />
     </svg>
-  {/if}
-  {#if isStopped}
+  {:else if isStopped}
     販売停止中
   {:else if currentStock <= 0}
     売り切れ
