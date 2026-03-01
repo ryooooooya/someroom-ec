@@ -118,16 +118,11 @@ export const getProductBySlug = async (slug: string, queries?: MicroCMSQueries) 
   }
 };
 
-// 販売停止中以外の商品一覧
+// 全商品一覧（販売停止中も含む）
 export const getActiveProducts = async (queries?: MicroCMSQueries) => {
   return await client.getList<Products>({
     endpoint: "products",
-    queries: {
-      ...queries,
-      filters: queries?.filters
-        ? `${queries.filters}[and]isActive[not_equals]${SALES_STATUS.STOPPED}`
-        : `isActive[not_equals]${SALES_STATUS.STOPPED}`,
-    },
+    queries,
   });
 };
 

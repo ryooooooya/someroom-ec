@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import Stripe from "stripe";
-import { getProductDetail, updateProductStock, SALES_STATUS } from "../../utils/microcms";
+import { getProductDetail, updateProductStock } from "../../utils/microcms";
 import { addOrderToSheet, type OrderData } from "../../utils/google-sheets";
 import {
   sendSlackNotification,
@@ -68,8 +68,6 @@ export const POST: APIRoute = async ({ request }) => {
         if (!item.productId) continue;
         try {
           const product = await getProductDetail(item.productId);
-          // 予約受付中の商品は在庫減算をスキップ
-          if (product.isActive === SALES_STATUS.PRE_ORDER) continue;
           const newStock = Math.max(0, product.stock - item.quantity);
           await updateProductStock(item.productId, newStock);
         } catch (stockError) {

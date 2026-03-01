@@ -41,8 +41,7 @@
   let quantityInCart = $derived(
     $cart?.items?.find((item) => item.productId === productId)?.quantity || 0
   );
-  // 予約受付中の場合は在庫上限チェックをスキップ
-  let noQuantityLeft = $derived(isPreOrder ? false : currentStock <= quantityInCart);
+  let noQuantityLeft = $derived(currentStock <= quantityInCart);
 
   async function addToCart() {
     errorMessage = "";
@@ -68,8 +67,7 @@
         errorMessage = "この商品は現在販売停止中です";
         return;
       }
-      // 在庫販売中の場合のみ在庫チェック
-      if (data.isActive === "在庫販売中" && data.stock <= quantityInCart) {
+      if (data.stock <= quantityInCart) {
         errorMessage = "在庫がありません";
         return;
       }
@@ -93,7 +91,7 @@
 <button
   type="button"
   class="button text-sm"
-  disabled={$isCartUpdating || noQuantityLeft || isStopped || (!isPreOrder && currentStock <= 0)}
+  disabled={$isCartUpdating || noQuantityLeft || isStopped || currentStock <= 0}
   onclick={addToCart}
 >
   {#if $isCartUpdating}
@@ -120,7 +118,7 @@
   {/if}
   {#if isStopped}
     販売停止中
-  {:else if !isPreOrder && currentStock <= 0}
+  {:else if currentStock <= 0}
     売り切れ
   {:else if isPreOrder}
     予約注文する
@@ -137,7 +135,7 @@
   <div class="text-center text-red-600">
     <small>{errorMessage}</small>
   </div>
-{:else if noQuantityLeft && !isStopped && !isPreOrder && currentStock > 0}
+{:else if noQuantityLeft && !isStopped && currentStock > 0}
   <div class="text-center text-red-600">
     <small>在庫上限に達しています</small>
   </div>

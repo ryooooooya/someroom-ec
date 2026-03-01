@@ -36,8 +36,7 @@ export const POST: APIRoute = async ({ request }) => {
           { status: 400, headers: { "Content-Type": "application/json" } }
         );
       }
-      // 在庫販売中の場合のみ在庫チェック（予約受付中はスキップ）
-      if (product.isActive === SALES_STATUS.ON_SALE && product.stock < quantity) {
+      if (product.stock < quantity) {
         return new Response(
           JSON.stringify({
             error: `「${product.name}」の在庫が不足しています（残り${product.stock}個）`,
