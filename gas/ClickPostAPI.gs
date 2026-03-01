@@ -24,7 +24,7 @@ var ClickPostAPI = (function() {
     return {
       orderId: params.orderId,
       recipientName: params.recipientName,
-      postalCode: addressParts.postalCode,
+      postalCode: params.postalCode || addressParts.postalCode,
       prefecture: addressParts.prefecture,
       city: addressParts.city,
       address: addressParts.address,
@@ -35,7 +35,7 @@ var ClickPostAPI = (function() {
 
   /**
    * クリックポスト用CSVを生成
-   * @param {Array} orders - 注文データの配列
+   * @param {Array} orders - 注文データの配列（postalCode, shippingAddressが別フィールド）
    * @returns {string} - CSV文字列
    */
   function generateCSV(orders) {
@@ -51,16 +51,18 @@ var ClickPostAPI = (function() {
     ].join(',');
 
     var rows = orders.map(function(order) {
+      // 新フォーマット: postalCodeとshippingAddressが別フィールド
+      var postalCode = String(order.postalCode || '').replace(/-/g, '');
       var addressParts = parseAddress(order.shippingAddress);
       return [
-        addressParts.postalCode,
+        postalCode,
         order.customerName,
         '様',
         addressParts.prefecture + addressParts.city,
         addressParts.address,
         '',
         '',
-        'デザイン商品',
+        order.items || 'デザイン商品',
       ].join(',');
     });
 

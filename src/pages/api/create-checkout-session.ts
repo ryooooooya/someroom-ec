@@ -46,13 +46,14 @@ export const POST: APIRoute = async ({ request }) => {
       }
     }
 
-    // Stripe Checkout Session作成
+    // Stripe Checkout Session作成（line_itemsにprice_dataで商品情報を送信）
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] =
       products.map(({ product, quantity }) => ({
         price_data: {
           currency: "jpy",
           product_data: {
             name: product.name,
+            description: product.text?.[0]?.description || product.size || undefined,
             images: product.images?.[0]?.url ? [product.images[0].url] : [],
             metadata: {
               microCmsId: product.id,
@@ -62,14 +63,6 @@ export const POST: APIRoute = async ({ request }) => {
         },
         quantity,
       }));
-
-    // カートデータをmetadataに保存（webhook処理用）
-    const cartData = products.map(({ product, quantity }) => ({
-      productId: product.id,
-      name: product.name,
-      price: product.price,
-      quantity,
-    }));
 
     const origin = new URL(request.url).origin;
 
@@ -82,7 +75,7 @@ export const POST: APIRoute = async ({ request }) => {
         allowed_countries: ["JP"],
       },
       metadata: {
-        cartData: JSON.stringify(cartData),
+        source: "web",
       },
       success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/checkout/cancel`,

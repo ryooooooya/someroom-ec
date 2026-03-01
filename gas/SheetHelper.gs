@@ -60,10 +60,11 @@ var SheetHelper = (function() {
       if (orderId && !shippedIds[orderId]) {
         unshipped.push({
           orderId: orderId,
-          customerName: orderData[j][3],
-          shippingAddress: orderData[j][4],
-          items: orderData[j][5],
-          createdAt: orderData[j][9],
+          customerName: orderData[j][9],   // J列: 氏名
+          postalCode: orderData[j][7],     // H列: 郵便番号
+          shippingAddress: orderData[j][8], // I列: 住所
+          items: orderData[j][2],          // C列: 商品名
+          createdAt: orderData[j][1],      // B列: 注文日時
           row: j + 1,
         });
       }
