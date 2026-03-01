@@ -22,6 +22,7 @@
   let isPreOrder = $derived(currentIsActive === "予約受付中");
   let isStopped = $derived(currentIsActive === "販売停止中");
   let showPreOrderModal = $state(false);
+  let emailCopied = $state(false);
 
   // マウント時に最新の在庫を確認
   onMount(async () => {
@@ -178,6 +179,16 @@
       >
         info@someroom.net にメール
       </a>
+      <p class="text-center text-sm text-gray-500 mt-3">
+        または <button
+          class="underline hover:no-underline cursor-pointer"
+          onclick={() => {
+            navigator.clipboard.writeText('info@someroom.net');
+            emailCopied = true;
+            setTimeout(() => emailCopied = false, 2000);
+          }}
+        >{emailCopied ? 'コピーしました!' : 'info@someroom.net'}</button> をコピー
+      </p>
     </div>
   </div>
 {/if}
