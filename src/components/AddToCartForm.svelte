@@ -21,6 +21,7 @@
 
   let isPreOrder = $derived(currentIsActive === "予約受付中");
   let isStopped = $derived(currentIsActive === "販売停止中");
+  let showPreOrderModal = $state(false);
 
   // マウント時に最新の在庫を確認
   onMount(async () => {
@@ -44,6 +45,14 @@
     $cart?.items?.find((item) => item.productId === productId)?.quantity || 0
   );
   let noQuantityLeft = $derived(currentStock <= quantityInCart);
+
+  function handleClick() {
+    if (isPreOrder) {
+      showPreOrderModal = true;
+      return;
+    }
+    addToCart();
+  }
 
   async function addToCart() {
     errorMessage = "";
@@ -93,8 +102,8 @@
 <button
   type="button"
   class="button text-sm"
-  disabled={isStatusLoading || $isCartUpdating || noQuantityLeft || isStopped || currentStock <= 0}
-  onclick={addToCart}
+  disabled={isStatusLoading || (isPreOrder ? false : ($isCartUpdating || noQuantityLeft || isStopped || currentStock <= 0))}
+  onclick={handleClick}
 >
   {#if isStatusLoading}
     …
@@ -129,17 +138,46 @@
     カートに入れる
   {/if}
 </button>
-{#if isPreOrder}
-  <div class="text-center text-gray-600 mt-2">
-    <small>受注生産品のため、お届けまでお時間をいただきます</small>
-  </div>
-{/if}
 {#if errorMessage}
   <div class="text-center text-red-600">
     <small>{errorMessage}</small>
   </div>
-{:else if noQuantityLeft && !isStopped && currentStock > 0}
+{:else if noQuantityLeft && !isStopped && !isPreOrder && currentStock > 0}
   <div class="text-center text-red-600">
     <small>在庫上限に達しています</small>
+  </div>
+{/if}
+
+{#if showPreOrderModal}
+  <div
+    class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
+    onclick={() => showPreOrderModal = false}
+    role="dialog"
+  >
+    <div
+      class="bg-white p-8 max-w-sm mx-4 relative"
+      onclick={(e) => e.stopPropagation()}
+    >
+      <button
+        class="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+        onclick={() => showPreOrderModal = false}
+        aria-label="閉じる"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      <p class="text-lg font-medium mb-4">予約注文について</p>
+      <p class="text-sm text-gray-700 leading-relaxed">
+        こちらは受注生産品です。<br />
+        ご注文は下記メールアドレスにてお受けしております。
+      </p>
+      <a
+        href="mailto:info@someroom.net"
+        class="block text-center mt-6 bg-black text-white py-3 px-4 hover:text-gray-400 transition-colors"
+      >
+        info@someroom.net にメール
+      </a>
+    </div>
   </div>
 {/if}
