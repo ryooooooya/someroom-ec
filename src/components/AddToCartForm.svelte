@@ -179,15 +179,28 @@
       >
         info@someroom.net にメール
       </a>
-      <p class="text-center text-sm text-gray-500 mt-3">
-        または <button
-          class="underline hover:no-underline cursor-pointer"
+      <p class="text-center text-sm text-gray-500 mt-3 flex items-center justify-center gap-1">
+        <span>または info@someroom.net</span>
+        <button
+          class="inline-flex items-center cursor-pointer text-gray-400 hover:text-gray-600 transition-colors"
           onclick={() => {
             navigator.clipboard.writeText('info@someroom.net');
             emailCopied = true;
             setTimeout(() => emailCopied = false, 2000);
           }}
-        >{emailCopied ? 'コピーしました!' : 'info@someroom.net'}</button> をコピー
+          aria-label="メールアドレスをコピー"
+        >
+          {#if emailCopied}
+            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+          {:else}
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke-width="2" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+            </svg>
+          {/if}
+        </button>
       </p>
     </div>
   </div>
