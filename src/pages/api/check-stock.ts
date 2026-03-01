@@ -17,7 +17,7 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(
       JSON.stringify({
         stock: product.stock,
-        isActive: product.isActive,
+        isActive: product.isActive[0],
       }),
       { status: 200, headers: { "Content-Type": "application/json" } }
     );

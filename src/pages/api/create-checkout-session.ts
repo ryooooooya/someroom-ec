@@ -28,7 +28,7 @@ export const POST: APIRoute = async ({ request }) => {
 
     // 販売ステータス・在庫チェック
     for (const { product, quantity } of products) {
-      if (product.isActive === SALES_STATUS.STOPPED) {
+      if (product.isActive[0] === SALES_STATUS.STOPPED) {
         return new Response(
           JSON.stringify({
             error: `「${product.name}」は現在販売停止中です`,

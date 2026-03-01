@@ -99,7 +99,7 @@ const productsListCat = product?.categories?.map((category) => (
                 productImage={product.images?.[0] || null}
                 productSlug={product.slug || product.id}
                 stock={product.stock}
-                isActive={product.isActive}
+                isActive={product.isActive[0]}
               />
             </div>
             <dl class="grid grid-cols-[auto_1fr] gap-x-2 gap-y-5 mt-12">

@@ -69,7 +69,7 @@ export type Products = {
     height: number;
     width: number;
   }[];
-  isActive: SalesStatus;
+  isActive: [SalesStatus];
   slug?: string;
 } & MicroCMSListContent;
 
