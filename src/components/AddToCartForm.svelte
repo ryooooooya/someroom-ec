@@ -180,7 +180,7 @@
         info@someroom.net にメール
       </a>
       <p class="text-center text-sm text-gray-500 mt-3 flex items-center justify-center gap-1">
-        <span>または info@someroom.net</span>
+        <span>または info@someroom.net をコピー</span>
         <button
           class="inline-flex items-center cursor-pointer text-gray-400 hover:text-gray-600 transition-colors"
           onclick={() => {
