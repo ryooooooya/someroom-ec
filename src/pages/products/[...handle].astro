@@ -74,6 +74,9 @@ const productsListCat = product?.categories?.map((category) => (
     <NotFoundLayout title="Product not found" message="Product not found" />
   ) : (
     <BaseLayout title={product.name}>
+      <Fragment slot="head">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+      </Fragment>
       <section class="pt-20 pb-8">
         <div class="grid grid-cols-2 gap-12 max-xs:grid-cols-1">
           <div class="">
@@ -207,6 +210,27 @@ const productsListCat = product?.categories?.map((category) => (
           Back
         </a>
       </div>
+      <script>
+        import Swiper from 'swiper';
+        import { Thumbs, Pagination } from 'swiper/modules';
+
+        const thumbSwiper = new Swiper('.product-thumb-swiper', {
+          slidesPerView: 'auto',
+          spaceBetween: 8,
+          watchSlidesProgress: true,
+        });
+
+        const mainSwiper = new Swiper('.product-main-swiper', {
+          modules: [Thumbs, Pagination],
+          pagination: {
+            el: '.product-main-swiper .swiper-pagination',
+            clickable: true,
+          },
+          thumbs: {
+            swiper: thumbSwiper,
+          },
+        });
+      </script>
     </BaseLayout>
   )
 }

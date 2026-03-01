@@ -7,45 +7,47 @@ export interface Props {
 const { images } = Astro.props as Props;
 ---
 
-<div class="">
-  <div class="md:order-2 md:col-span-6">
-    {images[0] && (
-      <GenericImage
-        classList="overflow-hidden rounded-lg h-full object-cover"
-        loading="eager"
-        image={images[0]}
-        sizes="(min-width: 1540px) 475px, (min-width: 1280px) 389px, (min-width: 1040px) 304px, (min-width: 780px) 720px, (min-width: 680px) 592px, calc(94.44vw - 31px)"
-      />
-    )}
+<div>
+  <!-- Main Slider -->
+  <div class="swiper product-main-swiper overflow-hidden rounded-lg">
+    <div class="swiper-wrapper">
+      {images.map((image) => (
+        <div class="swiper-slide">
+          <GenericImage
+            classList="w-full h-full object-cover"
+            loading="eager"
+            image={image}
+            sizes="(min-width: 1540px) 475px, (min-width: 1280px) 389px, (min-width: 1040px) 304px, (min-width: 780px) 720px, (min-width: 680px) 592px, calc(94.44vw - 31px)"
+          />
+        </div>
+      ))}
+    </div>
+    <div class="swiper-pagination"></div>
   </div>
-  <div
-    class:list={[
-      "grid",
-      "grid-cols-4",
-      "gap-4",
-      "md:order-1",
-      "md:col-span-2",
-      "md:flex",
-      "md:flex-col",
-      "md:gap-6",
-      { "md:justify-between": images.length > 2 },
-    ]}
-  >
-    {
-      images.map((image, index) => {
-        if (index < 3) {
-          return (
-            <div class="overflow-hidden rounded-lg">
+
+  <!-- Thumbnail Slider -->
+  {images.length > 1 && (
+    <div class="swiper product-thumb-swiper mt-4">
+      <div class="swiper-wrapper">
+        {images.map((image) => (
+          <div class="swiper-slide !w-auto cursor-pointer">
+            <div class="overflow-hidden rounded-md w-[72px] h-[72px] border-2 border-transparent transition-colors thumb-slide-inner">
               <GenericImage
-                classList=""
+                classList="w-full h-full object-cover"
                 loading="lazy"
                 image={image}
-                sizes="(min-width: 1540px) 475px, (min-width: 1280px) 389px, 304px"
+                sizes="72px"
               />
             </div>
-          );
-        }
-      })
-    }
-  </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
 </div>
+
+<style>
+  .product-thumb-swiper .swiper-slide-thumb-active .thumb-slide-inner {
+    border-color: #000;
+  }
+</style>
