@@ -1,5 +1,5 @@
 ---
-import { getCategories } from "../utils/microcms";
+import { getCategories, getProducts } from "../utils/microcms";
 
 import Navigation from "../components/Navigation.astro";
 // import Footer from "../components/Footer.astro";
@@ -16,9 +16,11 @@ export interface Props {
 
 const defaultDesc ="SomeRoomはさまざまな領域で活動するデザイナーが制作を行う作業部屋です。制作物の販売などのイベントにグループで参加しています。";
 
-const categories = await getCategories({
-  limit: 100
-});
+const [categories, productList] = await Promise.all([
+  getCategories({ limit: 100 }),
+  getProducts({ limit: 1, fields: ["id"] }),
+]);
+const hasProducts = productList.totalCount > 0;
 
 const { title, description = defaultDesc, currentPage } = Astro.props as Props;
 ---
@@ -52,7 +54,7 @@ const { title, description = defaultDesc, currentPage } = Astro.props as Props;
   <body>
     <CartDrawer client:idle />
     <div class="min-h-screen px-12 grid grid-cols-13 items-start gap-x-12 max-md:gap-x-6 max-sm:gap-x-4 max-lg:px-8 max-sm:px-6 max-xs:px-4">
-      <Navigation className="sticky top-0 col-span-3 max-sm:fixed max-sm:left-0 max-sm:w-full max-sm:px-6 max-xs:px-4" currentPage={currentPage} categories={categories.contents} />
+      <Navigation className="sticky top-0 col-span-3 max-sm:fixed max-sm:left-0 max-sm:w-full max-sm:px-6 max-xs:px-4" currentPage={currentPage} categories={categories.contents} hasProducts={hasProducts} />
       <main class="col-start-4 col-span-10 pb-12 max-sm:col-start-1 max-sm:col-span-13">
         <slot />
       </main>

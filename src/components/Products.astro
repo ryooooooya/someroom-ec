@@ -1,6 +1,7 @@
 ---
 import type { Products } from "../utils/microcms";
 import ProductCardByMicrocms from "./ProductCardByMicrocms.astro";
+import EmptyProducts from "./EmptyProducts.astro";
 
 export interface Props {
   products: Products[];
@@ -10,8 +11,12 @@ const { products } = Astro.props as Props;
 
 <section>
   <div class="container py-16 sm:py-20">
-    <div class="grid gap-12 md:grid-cols-2 lg:grid-cols-3">
-      {products.map((product) => <ProductCardByMicrocms product={product} />)}
-    </div>
+    {products.length > 0 ? (
+      <div class="grid gap-12 md:grid-cols-2 lg:grid-cols-3">
+        {products.map((product) => <ProductCardByMicrocms product={product} />)}
+      </div>
+    ) : (
+      <EmptyProducts />
+    )}
   </div>
 </section>
