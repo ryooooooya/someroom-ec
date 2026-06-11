@@ -4,6 +4,7 @@ import { setCache } from "../utils/cache";
 
 import BaseLayout from "../layouts/BaseLayout.astro";
 import ProductCardByMicrocms from "../components/ProductCardByMicrocms.astro";
+import EmptyProducts from "../components/EmptyProducts.astro";
 
 const title = "SomeRoom";
 const products = await getActiveProducts({ limit: 100 });
@@ -16,8 +17,12 @@ setCache.long(Astro);
     <h2 class="text-xs">
       All products:
     </h2>
-    <div class="grid grid-cols-5 gap-12 mt-3 max-lg:grid-cols-4 max-md:grid-cols-3 max-md:gap-8 max-sm:grid-cols-2 max-sm:gap-4">
-      {products.contents.map((product) => <ProductCardByMicrocms product={product} />)}
-    </div>
+    {products.contents.length > 0 ? (
+      <div class="grid grid-cols-5 gap-12 mt-3 max-lg:grid-cols-4 max-md:grid-cols-3 max-md:gap-8 max-sm:grid-cols-2 max-sm:gap-4">
+        {products.contents.map((product) => <ProductCardByMicrocms product={product} />)}
+      </div>
+    ) : (
+      <EmptyProducts class="mt-3" />
+    )}
   </section>
 </BaseLayout>

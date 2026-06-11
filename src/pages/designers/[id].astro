@@ -57,45 +57,49 @@ const products = await getProducts({
       />
     </div>
   </section>
-  <section class="flex flex-col gap-y-16 mt-20 max-md:gap-y-12 max-sm:gap-y-8">
-    {series.contents.map((content: any) => (
-      <ProductListXScrollWrap>
-        <a href={`/series/${content.id}`} class="max-w-[200px] min-w-[163px] max-xs:min-w-[calc(50%-16px)]">
-          <h3 class="text-2xl text-underline hover:no-underline whitespace-normal">{content.title}</h3>
-          <p class="mt-4 text-sm line-clamp-5 whitespace-normal">
-            {content.text}
-          </p>
-        </a>
-        {products.contents.map((product: any) => (
-          <>
-            {product.series.map((ser: any) => (
-              ser.id === content.id && (
-                <ProductCardByMicrocms
-                  product={product}
-                  className="max-w-[200px] min-w-[163px] max-xs:min-w-[calc(50%-16px)]"
-                />
-              )
-            ))}
-          </>
-        ))}
-      </ProductListXScrollWrap>
-    ))}
-  </section>
-  <section class="mt-20">
-    <div class="">
-      <div class="mb-3">
-        <h3 class="text-xs">
-          All products :
-        </h3>
+  {products.contents.length > 0 && (
+    <section class="flex flex-col gap-y-16 mt-20 max-md:gap-y-12 max-sm:gap-y-8">
+      {series.contents.map((content: any) => (
+        <ProductListXScrollWrap>
+          <a href={`/series/${content.id}`} class="max-w-[200px] min-w-[163px] max-xs:min-w-[calc(50%-16px)]">
+            <h3 class="text-2xl text-underline hover:no-underline whitespace-normal">{content.title}</h3>
+            <p class="mt-4 text-sm line-clamp-5 whitespace-normal">
+              {content.text}
+            </p>
+          </a>
+          {products.contents.map((product: any) => (
+            <>
+              {product.series.map((ser: any) => (
+                ser.id === content.id && (
+                  <ProductCardByMicrocms
+                    product={product}
+                    className="max-w-[200px] min-w-[163px] max-xs:min-w-[calc(50%-16px)]"
+                  />
+                )
+              ))}
+            </>
+          ))}
+        </ProductListXScrollWrap>
+      ))}
+    </section>
+  )}
+  {products.contents.length > 0 && (
+    <section class="mt-20">
+      <div class="">
+        <div class="mb-3">
+          <h3 class="text-xs">
+            All products :
+          </h3>
+        </div>
+        <div class="grid grid-cols-5 gap-x-10 max-lg:grid-cols-4 max-md:grid-cols-3 max-md:gap-8 max-sm:grid-cols-2 max-sm:gap-4">
+          {products.contents.map((product: any) => (
+            <ProductCardByMicrocms
+              product={product}
+              className=""
+            />
+          ))}
+        </div>
       </div>
-      <div class="grid grid-cols-5 gap-x-10 max-lg:grid-cols-4 max-md:grid-cols-3 max-md:gap-8 max-sm:grid-cols-2 max-sm:gap-4">
-        {products.contents.map((product: any) => (
-          <ProductCardByMicrocms
-            product={product}
-            className=""
-          />
-        ))}
-      </div>
-    </div>
-  </section>
+    </section>
+  )}
 </BaseLayout>

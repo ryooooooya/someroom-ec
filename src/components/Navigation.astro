@@ -7,8 +7,9 @@ export interface Props {
   className?: string;
   currentPage?: string;
   categories: Categories[];
+  hasProducts?: boolean;
 }
-const { className,currentPage, categories } = Astro.props as Props;
+const { className,currentPage, categories, hasProducts = true } = Astro.props as Props;
 ---
 
 <nav class={`${className} text-[28px] leading-8 z-10`} x-data="{ menuOpen: false, productOpen: false, contactOpen: false, modal: false }">
@@ -34,34 +35,48 @@ const { className,currentPage, categories } = Astro.props as Props;
         <!-- PC -->
         <span class="max-sm:hidden">
           <li class={`${currentPage == "product" && ("currentPage")}`}>
-            <buttton class="cursor-pointer" x-on:click="productOpen = ! productOpen, modal = ! modal">Products</buttton>
+            {hasProducts ? (
+              <buttton class="cursor-pointer" x-on:click="productOpen = ! productOpen, modal = ! modal">Products</buttton>
+            ) : (
+              <span class="line-through cursor-not-allowed">Products</span>
+            )}
           </li>
         </span>
         <!-- SP -->
         <span class="hidden max-sm:block">
           <li class={`${currentPage == "product" && ("currentPage")}`}>
-            <a href="/">Products</a>
+            {hasProducts ? (
+              <a href="/">Products</a>
+            ) : (
+              <span class="line-through">Products</span>
+            )}
           </li>
-          <ul class="flex flex-col gap-y-2 pl-3 pt-2">
-            <li>
-              <a href="/">ALL</a>
-            </li>
-            {categories.map((category) => (
-              <li class="whitespace-nowrap">
-                <a href={`/categories/${category.id}`} class={`${currentPage == category.id && ("currentPage")}`}>{category.name}</a>
+          {hasProducts && (
+            <ul class="flex flex-col gap-y-2 pl-3 pt-2">
+              <li>
+                <a href="/">ALL</a>
               </li>
-            ))}
-          </ul>
+              {categories.map((category) => (
+                <li class="whitespace-nowrap">
+                  <a href={`/categories/${category.id}`} class={`${currentPage == category.id && ("currentPage")}`}>{category.name}</a>
+                </li>
+              ))}
+            </ul>
+          )}
         </span>
         <li class={`${currentPage == "designers" && ("currentPage")}`}>
           <a href="/designers">Designers</a>
         </li>
-        <li class={`${currentPage == "series" && ("currentPage")}`}>
-          <a href="/series">Series</a>
-        </li>
-        <li class={`${currentPage == "cart" && ("currentPage")}`}>
-          <CartIcon client:load />
-        </li>
+        {hasProducts && (
+          <li class={`${currentPage == "series" && ("currentPage")}`}>
+            <a href="/series">Series</a>
+          </li>
+        )}
+        {hasProducts && (
+          <li class={`${currentPage == "cart" && ("currentPage")}`}>
+            <CartIcon client:load />
+          </li>
+        )}
         <div class="absolute -top-4 left-[140px] flex flex-col gap-y-4 bg-white p-4" x-show="productOpen" x-on:click.away="productOpen = false, modal = false" x-cloak>
           <a href="/">ALL</a>
           {categories.map((category) => (
